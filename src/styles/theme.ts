@@ -1,7 +1,7 @@
 export const lightTheme = {
   colors: {
-    primary: '#4CAF50',
-    secondary: '#FF4444',
+    primary: '#7E57C2',
+    secondary: '#AB47BC',
     background: '#F5F5F5',
     surface: '#FFFFFF',
     text: {
@@ -12,7 +12,7 @@ export const lightTheme = {
     border: '#E0E0E0',
     shadow: '#000000',
     chat: {
-      userBubble: '#4CAF50',
+      userBubble: '#7E57C2',
       botBubble: '#FFFFFF',
       userText: '#FFFFFF',
       botText: '#333333',
@@ -49,8 +49,8 @@ export const lightTheme = {
 
 export const darkTheme = {
   colors: {
-    primary: '#66BB6A',
-    secondary: '#FF5252',
+    primary: '#9575CD',
+    secondary: '#CE93D8',
     background: '#121212',
     surface: '#1E1E1E',
     text: {
@@ -61,7 +61,7 @@ export const darkTheme = {
     border: '#2C2C2C',
     shadow: '#000000',
     chat: {
-      userBubble: '#66BB6A',
+      userBubble: '#9575CD',
       botBubble: '#2C2C2C',
       userText: '#FFFFFF',
       botText: '#FFFFFF',

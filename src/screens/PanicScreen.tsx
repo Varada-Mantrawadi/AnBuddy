@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { apiService } from '../services/api';
 
 type EmergencyContact = {
   id: number;
@@ -19,40 +20,26 @@ type EmergencyContact = {
   type: 'emergency' | 'crisis' | 'support';
 };
 
-const emergencyContacts: EmergencyContact[] = [
-  {
-    id: 1,
-    name: 'Emergency Services',
-    number: '911',
-    description: 'For immediate emergency assistance',
-    type: 'emergency',
-  },
-  {
-    id: 2,
-    name: 'Crisis Hotline',
-    number: '1-800-273-8255',
-    description: '24/7 Suicide Prevention Lifeline',
-    type: 'crisis',
-  },
-  {
-    id: 3,
-    name: 'Crisis Text Line',
-    number: '741741',
-    description: 'Text HOME for crisis support',
-    type: 'crisis',
-  },
-  {
-    id: 4,
-    name: 'Therapist',
-    number: '+1-555-0123',
-    description: 'Your personal therapist',
-    type: 'support',
-  },
-];
+const defaultContacts: EmergencyContact[] = [];
 
 const PanicScreen = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedContact, setSelectedContact] = useState<EmergencyContact | null>(null);
+  const [contacts, setContacts] = useState<EmergencyContact[]>(defaultContacts);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await apiService.getEmergencyContacts();
+        setContacts(list);
+      } catch {
+        setContacts([
+          { id: 1, name: 'Emergency Helpline', number: '911', type: 'emergency', description: 'For immediate emergency assistance' },
+          { id: 2, name: 'Crisis Hotline', number: '1-800-273-8255', type: 'crisis', description: '24/7 crisis support and suicide prevention' },
+        ]);
+      }
+    })();
+  }, []);
 
   const handleCall = (contact: EmergencyContact) => {
     setSelectedContact(contact);
@@ -86,7 +73,7 @@ const PanicScreen = () => {
         </View>
 
         <View style={styles.contactsContainer}>
-          {emergencyContacts.map(contact => (
+          {contacts.map(contact => (
             <TouchableOpacity
               key={contact.id}
               style={[styles.contactCard, getContactStyle(contact.type)]}

@@ -1,4 +1,6 @@
 // API Configuration
+const isIosSimulator = true; // quick heuristic; can be refined at runtime
+// Use host.docker.internal for emulators that need to reach host; for iOS Simulator, localhost works.
 const API_BASE_URL = 'http://localhost:5001/api';
 
 // Types
@@ -33,9 +35,14 @@ export interface EmergencyContactsResponse {
 // API Service Class
 class ApiService {
   private baseUrl: string;
+  private authToken?: string;
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
+  }
+
+  setAuthToken(token?: string) {
+    this.authToken = token;
   }
 
   // Health check
@@ -60,6 +67,7 @@ class ApiService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
         },
         body: JSON.stringify({
           message,
@@ -88,7 +96,11 @@ class ApiService {
   // Get emergency contacts
   async getEmergencyContacts(): Promise<EmergencyContact[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/emergency-contacts`);
+      const response = await fetch(`${this.baseUrl}/emergency-contacts`, {
+        headers: {
+          ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
+        },
+      });
       const data: EmergencyContactsResponse = await response.json();
       
       if (!data.success) {
@@ -118,6 +130,29 @@ class ApiService {
         message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
+  }
+
+  // Journaling
+  async saveJournalEntry(text: string): Promise<{ success: boolean }>{
+    const response = await fetch(`${this.baseUrl}/journal`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
+      },
+      body: JSON.stringify({ text, timestamp: new Date().toISOString() }),
+    });
+    return response.json();
+  }
+
+  async listJournalEntries(): Promise<Array<{ id: number; text: string; timestamp: string }>>{
+    const response = await fetch(`${this.baseUrl}/journal`, {
+      headers: {
+        ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
+      },
+    });
+    const data = await response.json();
+    return data.entries || [];
   }
 }
 

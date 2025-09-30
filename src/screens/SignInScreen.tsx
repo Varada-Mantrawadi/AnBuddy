@@ -12,14 +12,25 @@ import {
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignInScreen = ({ navigation }) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignIn = () => {
-    // Add authentication logic here
-    navigation.navigate('Home');
+  const handleSignIn = async () => {
+    try {
+      const profile = {
+        name: name.trim(),
+        email: email.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
+      navigation.navigate('Home');
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+    }
   };
 
   return (
@@ -35,6 +46,14 @@ const SignInScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.formContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
             <TextInput
               style={styles.input}
               placeholder="Email"

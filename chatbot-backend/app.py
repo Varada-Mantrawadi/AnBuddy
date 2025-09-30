@@ -5,28 +5,33 @@ import os
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+from collections import deque
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+# In-memory journal store (per-session demo; replace with DB for production)
+journal_entries = deque(maxlen=500)
+
 
 # Configure OpenAI (you'll need to set OPENAI_API_KEY in .env file)
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Mental health conversation context
 MENTAL_HEALTH_CONTEXT = """
-You are AnBuddy, a compassionate AI mental health companion. Your role is to:
-1. Provide empathetic and supportive responses
-2. Help users process their emotions
-3. Offer coping strategies when appropriate
-4. Recognize when professional help might be needed
-5. Maintain a warm, non-judgmental tone
-6. Never give medical advice or diagnose conditions
+You are AnBuddy, a licensed-therapist-style AI mental health companion using evidence-based techniques
+like CBT, DBT, and motivational interviewing. Your goals:
+1) Show empathy first; validate feelings before giving strategies.
+2) Ask gentle, open-ended questions to understand context.
+3) Offer practical, low-risk coping steps tailored to what the user shares.
+4) Encourage journaling, breathing, grounding, reaching out to supports when relevant.
+5) Avoid diagnosis, medical advice, or unsafe instructions.
+6) If there is any sign of imminent harm or suicidal ideation, encourage contacting local emergency services
+   or crisis hotlines immediately. Provide crisis resources.
 
-Always respond in a caring, supportive manner. If someone expresses severe distress or suicidal thoughts, 
-encourage them to contact emergency services or a crisis hotline.
+Style: concise, warm, supportive, non-judgmental. When giving steps, keep them simple and actionable.
 """
 
 # Fallback responses when OpenAI is not available
@@ -192,6 +197,27 @@ def get_emergency_contacts():
         'success': True,
         'contacts': contacts
     })
+
+@app.route('/api/journal', methods=['GET', 'POST'])
+def journal():
+    """Simple in-memory journaling endpoints"""
+    try:
+        if request.method == 'POST':
+            data = request.get_json() or {}
+            text = (data.get('text') or '').strip()
+            if not text:
+                return jsonify({'success': False, 'error': 'Text is required'}), 400
+            entry = {
+                'id': len(journal_entries) + 1,
+                'text': text,
+                'timestamp': data.get('timestamp') or datetime.now().isoformat(),
+            }
+            journal_entries.appendleft(entry)
+            return jsonify({'success': True, 'entry': entry})
+        else:
+            return jsonify({'success': True, 'entries': list(journal_entries)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

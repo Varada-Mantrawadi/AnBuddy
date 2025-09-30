@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,15 +8,35 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { ThemeContext } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
+  const [userName, setUserName] = useState<string>('');
+  const theme = React.useContext(ThemeContext);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await AsyncStorage.getItem('userProfile');
+        if (data) {
+          const parsed = JSON.parse(data);
+          setUserName(parsed?.name || '');
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const toggleTheme = () => { theme.toggle(); };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Hello!</Text>
+          <Text style={styles.greeting}>Hello{userName ? `, ${userName}` : ''}!</Text>
           <Text style={styles.question}>How are you feeling today?</Text>
         </View>
 
@@ -31,6 +51,7 @@ const HomeScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={[styles.card, styles.breathingCard]}
+            onPress={() => navigation.navigate('Breathing')}
           >
             <Text style={styles.cardTitle}>Breathing Exercise</Text>
             <Text style={styles.cardDescription}>Take a moment to relax</Text>
@@ -38,6 +59,7 @@ const HomeScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={[styles.card, styles.journalCard]}
+            onPress={() => navigation.navigate('Journal')}
           >
             <Text style={styles.cardTitle}>Journal</Text>
             <Text style={styles.cardDescription}>Write down your thoughts</Text>
@@ -56,6 +78,25 @@ const HomeScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('Panic')}
         >
           <Text style={styles.panicButtonText}>EMERGENCY HELP</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.panicButton, { backgroundColor: '#607D8B', marginTop: 12 }]}
+          onPress={async () => { 
+            try {
+              await AsyncStorage.removeItem('userProfile');
+            } catch {}
+            navigation.replace('SignIn');
+          }}
+        >
+          <Text style={styles.panicButtonText}>Log out</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={{ alignSelf: 'center', marginTop: 12, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: '#7E57C2' }}
+          onPress={toggleTheme}
+        >
+          <Text style={{ color: '#FFF', fontWeight: '600' }}>{theme.isDark ? 'Light Mode' : 'Dark Mode'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -148,5 +189,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
 export default HomeScreen;
